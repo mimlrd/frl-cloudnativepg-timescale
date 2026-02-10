@@ -1,0 +1,14 @@
+# Git
+.git
+.gitignore
+
+# GitHub
+.github
+
+# Documentation
+README.md
+LICENSE
+
+# Development
+Makefile
+*.sh
