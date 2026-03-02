@@ -54,7 +54,7 @@ cd /tmp
 curl -fsSL "https://github.com/pgvector/pgvector/archive/refs/tags/v${PGVECTOR_VERSION}.tar.gz" \
     | tar xz
 cd pgvector-${PGVECTOR_VERSION}
-make PG_CONFIG=/usr/lib/postgresql/${POSTGRES_VERSION}/bin/pg_config
+make OPTFLAGS="-march=x86-64-v2" PG_CONFIG=/usr/lib/postgresql/${POSTGRES_VERSION}/bin/pg_config
 make install PG_CONFIG=/usr/lib/postgresql/${POSTGRES_VERSION}/bin/pg_config
 cd /
 rm -rf /tmp/pgvector-${PGVECTOR_VERSION}
