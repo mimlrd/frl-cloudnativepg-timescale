@@ -11,8 +11,9 @@
 # Environment variables:
 #   REGISTRY          - Container registry (default: ghcr.io/your-org)
 #   IMAGE_NAME        - Image name (default: frl-cloudnativepg-timescale)
-#   TIMESCALE_VERSION - TimescaleDB version (default: auto-detect latest)
-#   PGVECTOR_VERSION  - pgvector version (default: 0.8.0)
+#   TIMESCALE_VERSION  - TimescaleDB version (default: auto-detect latest)
+#   PGVECTOR_VERSION   - pgvector version (default: 0.8.0)
+#   PG_SEARCH_VERSION  - ParadeDB pg_search version (default: 0.22.1)
 
 set -euo pipefail
 
@@ -21,6 +22,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REGISTRY="${REGISTRY:-ghcr.io/mimlrd}"
 IMAGE_NAME="${IMAGE_NAME:-frl-cloudnativepg-timescale}"
 PGVECTOR_VERSION="${PGVECTOR_VERSION:-0.8.0}"
+PG_SEARCH_VERSION="${PG_SEARCH_VERSION:-0.22.1}"
 
 # Supported PostgreSQL versions and their CNPG base image tags
 declare -A PG_VERSIONS=(
@@ -100,6 +102,7 @@ while [[ $# -gt 0 ]]; do
             echo "  IMAGE_NAME            Image name (default: frl-cloudnativepg-timescale)"
             echo "  TIMESCALE_VERSION     TimescaleDB version (optional, auto-detect)"
             echo "  PGVECTOR_VERSION      pgvector version (default: 0.8.0)"
+            echo "  PG_SEARCH_VERSION     ParadeDB pg_search version (default: 0.22.1)"
             exit 0
             ;;
         *)
@@ -139,6 +142,7 @@ build_image() {
     log_info "  Base image: ghcr.io/cloudnative-pg/postgresql:${cnpg_tag}"
     log_info "  Target tag: ${image_tag}"
     log_info "  pgvector version: ${PGVECTOR_VERSION}"
+    log_info "  pg_search version: ${PG_SEARCH_VERSION}"
 
     if [[ -n "${TIMESCALE_VERSION:-}" ]]; then
         log_info "  TimescaleDB version: ${TIMESCALE_VERSION}"
@@ -157,6 +161,7 @@ build_image() {
         --build-arg CNPG_TAG="${cnpg_tag}" \
         --build-arg POSTGRES_VERSION="${pg_version}" \
         --build-arg PGVECTOR_VERSION="${PGVECTOR_VERSION}" \
+        --build-arg PG_SEARCH_VERSION="${PG_SEARCH_VERSION}" \
         ${TIMESCALE_VERSION:+--build-arg TIMESCALE_VERSION="${TIMESCALE_VERSION}"} \
         --tag "${image_tag}" \
         --tag "${image_tag}-$(date +%Y%m%d)" \

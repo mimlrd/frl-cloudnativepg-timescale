@@ -11,6 +11,7 @@
 REGISTRY ?= ghcr.io/mimlrd
 IMAGE_NAME ?= frl-cloudnativepg-timescale
 PGVECTOR_VERSION ?= 0.8.0
+PG_SEARCH_VERSION ?= 0.22.1
 
 # PostgreSQL versions and their CNPG base tags
 PG15_TAG = 15.10-bookworm
@@ -32,6 +33,7 @@ build-15:
 		--build-arg CNPG_TAG=$(PG15_TAG) \
 		--build-arg POSTGRES_VERSION=15 \
 		--build-arg PGVECTOR_VERSION=$(PGVECTOR_VERSION) \
+		--build-arg PG_SEARCH_VERSION=$(PG_SEARCH_VERSION) \
 		-t $(REGISTRY)/$(IMAGE_NAME):15 \
 		-t $(REGISTRY)/$(IMAGE_NAME):15-$$(date +%Y%m%d) \
 		.
@@ -42,6 +44,7 @@ build-16:
 		--build-arg CNPG_TAG=$(PG16_TAG) \
 		--build-arg POSTGRES_VERSION=16 \
 		--build-arg PGVECTOR_VERSION=$(PGVECTOR_VERSION) \
+		--build-arg PG_SEARCH_VERSION=$(PG_SEARCH_VERSION) \
 		-t $(REGISTRY)/$(IMAGE_NAME):16 \
 		-t $(REGISTRY)/$(IMAGE_NAME):16-$$(date +%Y%m%d) \
 		.
@@ -52,6 +55,7 @@ build-17:
 		--build-arg CNPG_TAG=$(PG17_TAG) \
 		--build-arg POSTGRES_VERSION=17 \
 		--build-arg PGVECTOR_VERSION=$(PGVECTOR_VERSION) \
+		--build-arg PG_SEARCH_VERSION=$(PG_SEARCH_VERSION) \
 		-t $(REGISTRY)/$(IMAGE_NAME):17 \
 		-t $(REGISTRY)/$(IMAGE_NAME):17-$$(date +%Y%m%d) \
 		.
@@ -85,11 +89,11 @@ test: build-17
 	@sleep 15
 	@echo "Checking available extensions..."
 	docker exec frl-timescale-test psql -U postgres -c \
-		"SELECT name, default_version FROM pg_available_extensions WHERE name IN ('timescaledb', 'vector', 'pg_trgm') ORDER BY name;"
+		"SELECT name, default_version FROM pg_available_extensions WHERE name IN ('timescaledb', 'vector', 'pg_trgm', 'pg_search') ORDER BY name;"
 	@echo ""
 	@echo "Creating extensions..."
 	docker exec frl-timescale-test psql -U postgres -c \
-		"CREATE EXTENSION IF NOT EXISTS timescaledb; CREATE EXTENSION IF NOT EXISTS vector; CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+		"CREATE EXTENSION IF NOT EXISTS timescaledb; CREATE EXTENSION IF NOT EXISTS vector; CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS pg_search;"
 	@echo ""
 	@echo "Listing installed extensions..."
 	docker exec frl-timescale-test psql -U postgres -c "\dx"
@@ -145,6 +149,7 @@ help:
 	@echo "  help         Show this help message"
 	@echo ""
 	@echo "Environment Variables:"
-	@echo "  REGISTRY          Container registry (default: ghcr.io/your-org)"
-	@echo "  IMAGE_NAME        Image name (default: frl-cloudnativepg-timescale)"
-	@echo "  PGVECTOR_VERSION  pgvector version (default: 0.8.0)"
+	@echo "  REGISTRY           Container registry (default: ghcr.io/mimlrd)"
+	@echo "  IMAGE_NAME         Image name (default: frl-cloudnativepg-timescale)"
+	@echo "  PGVECTOR_VERSION   pgvector version (default: 0.8.0)"
+	@echo "  PG_SEARCH_VERSION  ParadeDB pg_search version (default: 0.22.1)"

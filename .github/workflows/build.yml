@@ -85,6 +85,7 @@ jobs:
             CNPG_TAG=${{ matrix.cnpg_tag }}
             POSTGRES_VERSION=${{ matrix.pg_version }}
             PGVECTOR_VERSION=0.8.0
+            PG_SEARCH_VERSION=0.22.1
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -96,6 +97,7 @@ jobs:
             --build-arg CNPG_TAG=${{ matrix.cnpg_tag }} \
             --build-arg POSTGRES_VERSION=${{ matrix.pg_version }} \
             --build-arg PGVECTOR_VERSION=0.8.0 \
+            --build-arg PG_SEARCH_VERSION=0.22.1 \
             --tag test-image:${{ matrix.pg_version }} \
             .
 
@@ -109,7 +111,7 @@ jobs:
           sleep 10
 
           # Check that extensions are available
-          docker exec test-pg-${{ matrix.pg_version }} psql -U postgres -c "SELECT * FROM pg_available_extensions WHERE name IN ('timescaledb', 'vector', 'pg_trgm');"
+          docker exec test-pg-${{ matrix.pg_version }} psql -U postgres -c "SELECT * FROM pg_available_extensions WHERE name IN ('timescaledb', 'vector', 'pg_trgm', 'pg_search');"
 
           # Clean up
           docker stop test-pg-${{ matrix.pg_version }}
