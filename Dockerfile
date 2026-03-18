@@ -2,18 +2,20 @@
 
 # FRL CloudNativePG TimescaleDB Image
 # Based on: https://github.com/clevyr/docker-cloudnativepg-timescale
-# Purpose: CNPG-compatible PostgreSQL with TimescaleDB, pgvector, and pg_trgm extensions
+# Purpose: CNPG-compatible PostgreSQL with TimescaleDB, pgvector, pg_trgm, and pg_search extensions
 #
 # This image extends the official CloudNativePG PostgreSQL image and adds:
 # - TimescaleDB extension for time-series data
 # - pgvector extension for vector embeddings (RAG applications)
 # - pg_trgm extension for trigram-based text search
+# - pg_search (ParadeDB) extension for BM25 full-text search with ICU tokenization
 #
 # Build args:
-#   CNPG_TAG          - CloudNativePG PostgreSQL image tag (e.g., "17.2-bookworm")
-#   POSTGRES_VERSION  - PostgreSQL major version (e.g., "17")
-#   TIMESCALE_VERSION - TimescaleDB version (e.g., "2.17.2~debian12")
-#   PGVECTOR_VERSION  - pgvector version (e.g., "0.8.0")
+#   CNPG_TAG           - CloudNativePG PostgreSQL image tag (e.g., "17.2-bookworm")
+#   POSTGRES_VERSION   - PostgreSQL major version (e.g., "17")
+#   TIMESCALE_VERSION  - TimescaleDB version (e.g., "2.17.2~debian12")
+#   PGVECTOR_VERSION   - pgvector version (e.g., "0.8.0")
+#   PG_SEARCH_VERSION  - ParadeDB pg_search version (e.g., "0.22.1")
 
 ARG CNPG_TAG=17.2-bookworm
 
@@ -25,6 +27,7 @@ USER root
 ARG POSTGRES_VERSION=17
 ARG TIMESCALE_VERSION
 ARG PGVECTOR_VERSION=0.8.0
+ARG PG_SEARCH_VERSION=0.22.1
 
 # Install TimescaleDB and pgvector in a single layer
 RUN <<EOF
@@ -71,6 +74,13 @@ else
         "timescaledb-2-postgresql-${POSTGRES_VERSION}"
 fi
 
+# Install pg_search (ParadeDB BM25 full-text search)
+# On pg17+, pg_search auto-loads — no shared_preload_libraries change needed
+curl -fsSL "https://github.com/paradedb/paradedb/releases/download/v${PG_SEARCH_VERSION}/postgresql-${POSTGRES_VERSION}-pg-search_${PG_SEARCH_VERSION}-1PARADEDB-${VERSION_CODENAME}_amd64.deb" \
+    -o /tmp/pg_search.deb
+apt-get install -y --no-install-recommends /tmp/pg_search.deb
+rm /tmp/pg_search.deb
+
 # Clean up build dependencies to reduce image size
 apt-get purge -y \
     curl \
@@ -93,8 +103,10 @@ rm -rf /var/cache/apt/*
 echo "=== Installed Extensions ==="
 ls -la /usr/lib/postgresql/${POSTGRES_VERSION}/lib/timescaledb*.so || true
 ls -la /usr/lib/postgresql/${POSTGRES_VERSION}/lib/vector.so || true
+ls -la /usr/lib/postgresql/${POSTGRES_VERSION}/lib/pg_search*.so || true
 ls -la /usr/share/postgresql/${POSTGRES_VERSION}/extension/timescaledb*.sql | head -5 || true
 ls -la /usr/share/postgresql/${POSTGRES_VERSION}/extension/vector*.sql || true
+ls -la /usr/share/postgresql/${POSTGRES_VERSION}/extension/pg_search*.sql || true
 
 EOF
 
@@ -103,7 +115,7 @@ USER 26
 
 # Labels for image metadata
 LABEL org.opencontainers.image.title="FRL CloudNativePG TimescaleDB"
-LABEL org.opencontainers.image.description="CloudNativePG-compatible PostgreSQL with TimescaleDB, pgvector, and pg_trgm"
+LABEL org.opencontainers.image.description="CloudNativePG-compatible PostgreSQL with TimescaleDB, pgvector, pg_trgm, and pg_search (BM25)"
 LABEL org.opencontainers.image.source="https://github.com/mimlrd/frl-cloudnativepg-timescale"
 LABEL org.opencontainers.image.vendor="MIMLRD"
 LABEL maintainer="Firstrepubliclabs Team"
